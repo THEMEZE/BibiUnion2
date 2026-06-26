@@ -66,8 +66,8 @@ echo "✅ settings.py mis à jour"
 
 # ── Redémarrage de Gunicorn ───────────────────────────────────────────────────
 echo "🔄 Redémarrage de Gunicorn..."
-if systemctl is-active --quiet gunicorn-mariage 2>/dev/null; then
-    sudo systemctl restart gunicorn-mariage
+if systemctl is-active --quiet gunicorn-mariage.service 2>/dev/null; then
+    sudo systemctl restart gunicorn-mariage.service
     echo "✅ Gunicorn redémarré"
 else
     echo "⚠️  Gunicorn non trouvé via systemd (mode dev ?)"
@@ -79,7 +79,13 @@ cd "$SCRIPT_DIR"
 if [ -f "venv/bin/activate" ]; then
     source venv/bin/activate
 fi
-python manage.py generate_qrcode
+
+PROJECT_DIR="/mnt/mariage_data/BibiUnion"
+VENV_PYTHON="$PROJECT_DIR/venv/bin/python"
+
+cd "$PROJECT_DIR"
+
+"$VENV_PYTHON" manage.py generate_qrcode
 echo "✅ QR Code régénéré"
 
 # ── Mise à jour GitHub Pages (redirection fixe) ───────────────────────────────
