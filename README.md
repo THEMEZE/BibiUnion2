@@ -5691,8 +5691,8 @@ git clone "$REPO" BibiUnion
 cd BibiUnion
 ok "Clone terminé : $REPO"
 
-chmod +x ./run.sh
-./run.sh
+#chmod +x ./run.sh
+#./run.sh
 
 EOF
 
