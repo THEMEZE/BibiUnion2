@@ -5751,16 +5751,32 @@ echo -e "\n${BOLD}Création du compte administrateur :${RESET}"
 # ════════════════════════════════════════════
 echo -e "\n⏳ Installation des services systemd..."
 
+# ── systemd : socket + service (OK en copy, mais safe) ────────────────
 sudo cp deploy/gunicorn-mariage.socket  /etc/systemd/system/
 sudo cp deploy/gunicorn-mariage.service /etc/systemd/system/
-sudo cp deploy/nginx-mariage.conf       /etc/nginx/sites-available/mariage
-sudo ln -sf /etc/nginx/sites-available/mariage /etc/nginx/sites-enabled/mariage
-sudo rm -f  /etc/nginx/sites-enabled/default
 
+#sudo install -m 644 deploy/gunicorn-mariage.socket /etc/systemd/system/
+#sudo install -m 644 deploy/gunicorn-mariage.service /etc/systemd/system/
+
+# ── NGINX : éviter conflit cp vs symlink ──────────────────────────────
+if [ -L /etc/nginx/sites-available/mariage ] || [ -f /etc/nginx/sites-available/mariage ]; then
+    sudo ln -sf /mnt/mariage_data/BibiUnion/deploy/nginx-mariage.conf \
+        /etc/nginx/sites-available/mariage
+else
+    sudo cp deploy/nginx-mariage.conf /etc/nginx/sites-available/mariage
+fi
+
+sudo ln -sf /etc/nginx/sites-available/mariage /etc/nginx/sites-enabled/mariage
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# ── reload systemd ────────────────────────────────────────────────────
 sudo systemctl daemon-reload
+
 sudo systemctl enable --now gunicorn-mariage.socket
 sudo systemctl enable --now gunicorn-mariage.service
+
 sudo systemctl restart nginx
+
 ok "Services démarrés"
 
 # ════════════════════════════════════════════
