@@ -1,4 +1,11 @@
 #!/bin/bash
+set -e
+
+# ── Couleurs ──────────────────────────────────────────────
+GREEN='\033[92m'; YELLOW='\033[93m'; RED='\033[91m'; RESET='\033[0m'; BOLD='\033[1m'
+ok()   { echo -e "${GREEN}  ✅  $1${RESET}"; }
+warn() { echo -e "${YELLOW}  ⚠️   $1${RESET}"; }
+err()  { echo -e "${RED}  ❌  $1${RESET}"; exit 1; }
 
 # ════════════════════════════════════════════
 # 3. ENVIRONNEMENT VIRTUEL
@@ -22,6 +29,7 @@ ok "Configuration terminée"
 # 5. BASE DE DONNÉES & FICHIERS STATIQUES
 # ════════════════════════════════════════════
 echo -e "\n⏳ Migrations..."
+./venv/bin/python manage.py makemigrations gallery
 ./venv/bin/python manage.py migrate
 ok "Migrations appliquées"
 
