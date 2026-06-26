@@ -219,6 +219,169 @@ def tree1():
     print(f"\n⚠️  Différence réelle - Finder : {human(diff)}")
 
     print("\n======================================================\n")
+    
+    
+import os
+import shutil
+import platform
+import subprocess
+
+
+def get_filesystem_info(path):
+    """Retourne les informations du système de fichiers."""
+
+    system = platform.system()
+
+    info = {
+        "system": system,
+        "filesystem": "Inconnu",
+        "device": "Inconnu"
+    }
+
+    try:
+        if system == "Linux":
+            out = subprocess.check_output(
+                ["df", "-T", path],
+                text=True
+            ).splitlines()[1].split()
+
+            info["device"] = out[0]
+            info["filesystem"] = out[1]
+
+            # Distribution Linux
+            try:
+                with open("/etc/os-release") as f:
+                    txt = f.read()
+
+                for line in txt.splitlines():
+                    if line.startswith("PRETTY_NAME="):
+                        info["system"] = line.split("=", 1)[1].strip('"')
+                        break
+            except:
+                pass
+
+        elif system == "Darwin":
+
+            info["system"] = "macOS"
+
+            out = subprocess.check_output(
+                ["df", "-T", "apfs", path],
+                text=True
+            ).splitlines()[1].split()
+
+            info["device"] = out[0]
+            info["filesystem"] = "APFS"
+
+        elif system == "Windows":
+
+            drive = os.path.splitdrive(os.path.abspath(path))[0]
+
+            info["device"] = drive
+            info["filesystem"] = "NTFS/FAT"
+
+    except:
+        pass
+
+    return info
+
+
+def largest_directories(path, n=10):
+    """Plus gros dossiers du répertoire courant."""
+
+    lst = []
+
+    for name in os.listdir(path):
+
+        full = os.path.join(path, name)
+
+        if os.path.isdir(full):
+            lst.append((name, get_size(full)))
+
+    return sorted(lst, key=lambda x: x[1], reverse=True)[:n]
+
+
+def largest_files(path, limit=100 * 1024 * 1024):
+    """Liste les fichiers dépassant une certaine taille."""
+
+    lst = []
+
+    for root, dirs, files in os.walk(path):
+
+        for file in files:
+
+            full = os.path.join(root, file)
+
+            try:
+                size = os.path.getsize(full)
+
+                if size >= limit:
+                    lst.append((full, size))
+
+            except:
+                pass
+
+    return sorted(lst, key=lambda x: x[1], reverse=True)
+
+
+def tree1(path="."):
+
+    print("\n========================================")
+    print("        DISK ANALYZER v2.0")
+    print("========================================\n")
+
+    info = get_filesystem_info(path)
+
+    total, used, free = shutil.disk_usage(path)
+
+    print(f"🖥️ Système        : {info['system']}")
+    print(f"💽 Disque         : {info['device']}")
+    print(f"📂 Filesystem     : {info['filesystem']}")
+    print(f"📦 Total          : {human(total)}")
+    print(f"📈 Utilisé        : {human(used)} ({used/total*100:.1f} %)")
+    print(f"📉 Libre          : {human(free)} ({free/total*100:.1f} %)")
+
+    print("\n📁 Plus gros dossiers")
+    print("-----------------------------------------")
+
+    for name, size in largest_directories(path):
+        print(f"{name:<25} {human(size):>10}")
+
+    print("\n⚠ Gros fichiers (>100 MB)")
+    print("-----------------------------------------")
+
+    files = largest_files(path)
+
+    if len(files) == 0:
+        print("Aucun.")
+    else:
+        for file, size in files:
+            print(f"{file:<50} {human(size)}")
+
+    #
+    # Informations spécifiques macOS
+    #
+
+    if platform.system() == "Darwin":
+
+        try:
+            purgeable = get_apfs_stats()
+
+            print("\n🍏 APFS")
+            print("-----------------------------------------")
+            print(f"Purgeable : {human(purgeable)}")
+
+        except:
+            pass
+
+        try:
+            snaps, snap_size = get_snapshots()
+
+            print(f"Snapshots : {len(snaps)} ({human(snap_size)})")
+
+        except:
+            pass
+
+    print("\n========================================\n")
 
 
 if __name__ == "__main__":
@@ -243,6 +406,7 @@ base}")
     print()
 
     tree(base, max_depth=max_depth)
-    
-    print("\n" + "="*40 + "\n")
-    tree1()
+
+    print("\n" + "=" * 40 + "\n")
+
+    tree1(base)
