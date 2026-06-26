@@ -417,8 +417,8 @@ Suppression différenciée : `DELETE_PHOTO_URL` pour les photos, `DELETE_MEDIA_U
 |`gallery/urls.py` | 1 | 
 |`gallery/admin.py` | 1 | 
 |`gallery/migrations/0002_media.py`| 1 |
-|`setup.py' | 1 |
-|'start_tunnel.sh` | 1 | 
+|`setup.py` | 1 |
+|`start_tunnel.sh` | 1 | 
 |`README_GITHUB_PAGES.md`| 1 | 
 |`templates/base.html` | 2 | 
 |`templates/upload.html`| 2 |
