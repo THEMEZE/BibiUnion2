@@ -74,6 +74,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'photos.bibiunion.fr',
+    '*.trycloudflare.com',
     'localhost'
     'localhost',
     '127.0.0.1',
