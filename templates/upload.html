@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Partager — BibiUnion{% endblock %}
+
+{% block content %}
+<div class="page-card upload-container">
+
+  <!-- En-tête de page avec ruban doré -->
+  <div class="page-header">
+    <p class="page-eyebrow">Vos souvenirs</p>
+    <h2 class="page-title">Partagez vos photos & vidéos</h2>
+    <div class="title-ribbon" aria-hidden="true"></div>
+    <p class="page-subtitle">
+      Choisissez votre nom, votre table, puis déposez photos, vidéos ou enregistrements —
+      ou capturez directement depuis votre appareil.
+    </p>
+  </div>
+
+  <!-- Formulaire principal -->
+  <form id="upload-form" class="upload-form" novalidate>
+    {% csrf_token %}
+
+    <!-- Nom + Table -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="auteur" class="form-label">Votre prénom</label>
+        <input type="text" id="auteur" name="auteur" class="input-field"
+               placeholder="Optionnel" maxlength="100" autocomplete="given-name">
+      </div>
+      <div class="form-group">
+        <label for="table" class="form-label">Votre table</label>
+        <select id="table" name="table" class="input-field">
+          {% for value, label in table_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- ── ONGLETS de type de partage ── -->
+    <div class="upload-tabs" role="tablist" aria-label="Type de partage">
+      <button type="button" class="upload-tab active" role="tab" data-tab="files"    aria-selected="true">
+        📁 Fichiers
+      </button>
+      <button type="button" class="upload-tab"        role="tab" data-tab="camera"   aria-selected="false">
+        📸 Photo
+      </button>
+      <button type="button" class="upload-tab"        role="tab" data-tab="video-rec" aria-selected="false">
+        🎬 Vidéo
+      </button>
+      <button type="button" class="upload-tab"        role="tab" data-tab="audio-rec" aria-selected="false">
+        🎙️ Vocal
+      </button>
+    </div>
+
+    <!-- ── TAB : Fichiers ── -->
+    <div class="tab-panel active" id="tab-files" role="tabpanel">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="file-input" name="images"
+               accept="image/*,.heic,video/*,audio/*" multiple hidden>
+        <div class="dropzone-content">
+          <span class="dropzone-icon" aria-hidden="true">💍</span>
+          <span class="dropzone-text">Touchez pour choisir vos fichiers</span>
+          <span class="dropzone-subtext">
+            Photos jusqu'à {{ max_photo_mo }} Mo · Vidéos jusqu'à {{ max_video_mo }} Mo · Audios jusqu'à {{ max_audio_mo }} Mo
+          </span>
+        </div>
+      </label>
+    </div>
+
+    <!-- ── TAB : Capture photo ── -->
+    <div class="tab-panel" id="tab-camera" role="tabpanel">
+      <div class="capture-panel">
+        <video id="camera-preview" class="capture-video" autoplay playsinline muted></video>
+        <canvas id="camera-canvas" hidden></canvas>
+        <div class="capture-controls">
+          <button type="button" id="btn-start-camera" class="btn btn-outline">
+            Activer la caméra
+          </button>
+          <button type="button" id="btn-snap" class="btn btn-primary" disabled>
+            📸 Prendre la photo
+          </button>
+          <button type="button" id="btn-flip-camera" class="btn btn-ghost" disabled title="Retourner caméra">
+            🔄
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB : Enregistrement vidéo ── -->
+    <div class="tab-panel" id="tab-video-rec" role="tabpanel">
+      <div class="capture-panel">
+        <video id="video-rec-preview" class="capture-video" autoplay playsinline muted></video>
+        <div class="rec-timer" id="video-rec-timer" aria-live="polite">00:00</div>
+        <div class="capture-controls">
+          <button type="button" id="btn-start-video" class="btn btn-outline">
+            Activer la caméra
+          </button>
+          <button type="button" id="btn-record-video" class="btn btn-primary" disabled>
+            ⏺ Démarrer
+          </button>
+          <button type="button" id="btn-stop-video" class="btn btn-danger" disabled>
+            ⏹ Arrêter
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB : Enregistrement audio ── -->
+    <div class="tab-panel" id="tab-audio-rec" role="tabpanel">
+      <div class="capture-panel audio-panel">
+        <div class="audio-waveform" id="audio-waveform" aria-hidden="true">
+          {% for i in "123456789012345678901234" %}
+            <span class="waveform-bar"></span>
+          {% endfor %}
+        </div>
+        <div class="rec-timer" id="audio-rec-timer" aria-live="polite">00:00</div>
+        <div class="capture-controls">
+          <button type="button" id="btn-record-audio" class="btn btn-primary">
+            🎙️ Enregistrer
+          </button>
+          <button type="button" id="btn-stop-audio" class="btn btn-danger" disabled>
+            ⏹ Arrêter
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Prévisualisation des fichiers en attente ── -->
+    <div id="preview-container" class="preview-container" aria-label="Aperçu des fichiers sélectionnés"></div>
+
+    <!-- ── Bouton d'envoi ── -->
+    <button type="submit" id="submit-btn" class="btn btn-primary btn-full" disabled>
+      Envoyer
+    </button>
+  </form>
+
+  <!-- Résumé post-envoi -->
+  <div id="upload-summary" class="upload-summary" style="display:none;" aria-live="polite">
+    <div class="summary-card">
+      <p class="summary-icon" aria-hidden="true">💛</p>
+      <p id="summary-text" class="summary-text"></p>
+      <a href="{% url 'gallery' %}" class="btn btn-primary">Voir la galerie</a>
+      <button type="button" class="btn btn-outline" id="add-more-btn">Ajouter d'autres souvenirs</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  window.UPLOAD_URL       = "{% url 'upload_ajax' %}";
+  window.UPLOAD_MEDIA_URL = "{% url 'upload_media_ajax' %}";
+  window.MAX_VIDEO_MB     = {{ max_video_mo }};
+  window.MAX_AUDIO_MB     = {{ max_audio_mo }};
+</script>
+{% endblock %}

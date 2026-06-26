@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Administration — BibiUnion{% endblock %}
+
+{% block content %}
+<div class="page-card admin-container">
+
+  <div class="page-header">
+    <p class="page-eyebrow">Espace privé</p>
+    <h2 class="page-title">Administration</h2>
+    <div class="title-ribbon" aria-hidden="true"></div>
+    <p class="admin-stats">{{ total_count }} souvenir(s) au total</p>
+  </div>
+
+  <!-- QR Code compact -->
+  {% if qr_url %}
+  <div class="admin-qr-row">
+    <img src="{{ qr_url }}" alt="QR Code" class="admin-qr-img">
+    <div>
+      <p class="admin-qr-url">{{ site_public_url }}</p>
+      <a href="{% url 'qrcode' %}" class="btn btn-outline btn-sm">Voir en grand</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filtres -->
+  <div class="admin-filters">
+    <form method="get" class="filter-form">
+      <select name="type" class="input-field input-field--sm" aria-label="Filtrer par type">
+        <option value="" {% if not selected_type %}selected{% endif %}>Tous les types</option>
+        <option value="photo" {% if selected_type == 'photo' %}selected{% endif %}>📷 Photos</option>
+        <option value="video" {% if selected_type == 'video' %}selected{% endif %}>🎬 Vidéos</option>
+        <option value="audio" {% if selected_type == 'audio' %}selected{% endif %}>🎵 Audios</option>
+      </select>
+      <select name="table" class="input-field input-field--sm" aria-label="Filtrer par table">
+        <option value="">Toutes les tables</option>
+        {% for value, label in table_choices %}
+          {% if value %}
+            <option value="{{ value }}" {% if value == selected_table %}selected{% endif %}>{{ label }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <input type="date" name="date" value="{{ selected_date }}" class="input-field input-field--sm" aria-label="Filtrer par date">
+      <button type="submit" class="btn btn-outline btn-sm">Filtrer</button>
+      <a href="{% url 'admin_gallery' %}" class="btn btn-ghost btn-sm">✕</a>
+    </form>
+
+    <a href="{% url 'download_zip' %}?table={{ selected_table }}&date={{ selected_date }}&type={{ selected_type }}"
+       class="btn btn-primary btn-sm">
+      ⬇ Tout télécharger (ZIP)
+    </a>
+  </div>
+
+  <!-- Grille d'items -->
+  <div class="admin-grid">
+    {% for item in page_obj %}
+      <div class="admin-card" data-id="{{ item.id }}"
+           data-type="{% if item.media_type is not None %}{{ item.media_type }}{% else %}photo{% endif %}">
+
+        <!-- Aperçu -->
+        {% if item.media_type == 'video' %}
+          <div class="admin-thumb admin-thumb--video">
+            {% if item.thumbnail %}
+              <img src="{{ item.thumbnail.url }}" alt="Miniature vidéo" loading="lazy">
+            {% else %}
+              <span class="admin-media-icon">🎬</span>
+            {% endif %}
+            <span class="media-badge">▶</span>
+          </div>
+        {% elif item.media_type == 'audio' %}
+          <div class="admin-thumb admin-thumb--audio">
+            <span class="admin-media-icon">🎵</span>
+            {% if item.duration_seconds %}
+              <span class="media-duration">{{ item.duration_seconds|floatformat:"0" }}s</span>
+            {% endif %}
+          </div>
+        {% else %}
+          <img src="{{ item.thumbnail.url|default:item.image.url }}"
+               alt="Photo" class="admin-thumb" loading="lazy">
+        {% endif %}
+
+        <!-- Infos -->
+        <div class="admin-card-info">
+          <p class="admin-author">{{ item.auteur|default:"Anonyme" }}</p>
+          {% if item.table %}<p class="admin-table">{{ item.get_table_display }}</p>{% endif %}
+          <p class="admin-date">{{ item.date_upload|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="admin-actions">
+          {% if item.media_type is not None %}
+            <a href="{% url 'download_media' item.id %}" class="btn-icon" title="Télécharger" aria-label="Télécharger">⬇️</a>
+            <button class="btn-icon delete-btn" data-id="{{ item.id }}" data-type="{{ item.media_type }}"
+                    title="Supprimer" aria-label="Supprimer">🗑️</button>
+          {% else %}
+            <a href="{% url 'download_photo' item.id %}" class="btn-icon" title="Télécharger" aria-label="Télécharger">⬇️</a>
+            <button class="btn-icon delete-btn" data-id="{{ item.id }}" data-type="photo"
+                    title="Supprimer" aria-label="Supprimer">🗑️</button>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p class="admin-empty">Aucun souvenir à afficher.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  <nav class="pagination" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&table={{ selected_table }}&date={{ selected_date }}&type={{ selected_type }}"
+         class="btn btn-outline btn-sm">← Précédent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&table={{ selected_table }}&date={{ selected_date }}&type={{ selected_type }}"
+         class="btn btn-outline btn-sm">Suivant →</a>
+    {% endif %}
+  </nav>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  window.DELETE_PHOTO_URL = "/admin-gallery/delete/photo/";
+  window.DELETE_MEDIA_URL = "/admin-gallery/delete/media/";
+  window.CSRF_TOKEN       = "{{ csrf_token }}";
+</script>
+{% endblock %}

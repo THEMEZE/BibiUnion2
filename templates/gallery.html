@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Galerie — BibiUnion{% endblock %}
+
+{% block content %}
+<div class="page-card gallery-container">
+
+  <div class="page-header">
+    <p class="page-eyebrow">Tous vos souvenirs</p>
+    <h2 class="page-title">Galerie du mariage</h2>
+    <div class="title-ribbon" aria-hidden="true"></div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="gallery-filters" role="search" aria-label="Filtres de la galerie">
+
+    <!-- Filtre type de média -->
+    <div class="filter-type-group" role="group" aria-label="Type de média">
+      <button class="filter-type-btn active" data-type="all">Tout</button>
+      <button class="filter-type-btn" data-type="photo">📷 Photos</button>
+      <button class="filter-type-btn" data-type="video">🎬 Vidéos</button>
+      <button class="filter-type-btn" data-type="audio">🎵 Audios</button>
+    </div>
+
+    <div class="filter-fields">
+      <select id="filter-table" class="input-field input-field--sm" aria-label="Filtrer par table">
+        <option value="">Toutes les tables</option>
+        {% for value, label in table_choices %}
+          {% if value %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+
+      <input type="date" id="filter-date" class="input-field input-field--sm" aria-label="Filtrer par date">
+
+      <button id="reset-filters" class="btn btn-ghost btn-sm" aria-label="Réinitialiser les filtres">
+        ✕ Réinitialiser
+      </button>
+    </div>
+
+    <!-- Diaporama -->
+    <label class="toggle-slideshow" aria-label="Diaporama automatique">
+      <input type="checkbox" id="toggle-slideshow" role="switch">
+      <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+      <span>Diaporama</span>
+    </label>
+  </div>
+
+  <!-- Grille -->
+  <div id="gallery-grid" class="gallery-grid" role="list" aria-label="Galerie de médias"></div>
+
+  <div id="gallery-loader" class="gallery-loader" aria-live="polite" style="display:none;">
+    <span class="loader-spinner" aria-hidden="true"></span> Chargement…
+  </div>
+
+  <div id="gallery-empty" class="gallery-empty" aria-live="polite" style="display:none;">
+    <p class="empty-ornament" aria-hidden="true">❧</p>
+    <p>Aucun souvenir pour le moment.</p>
+    <a href="{% url 'upload' %}" class="btn btn-outline btn-sm">Soyez le premier !</a>
+  </div>
+</div>
+
+<!-- ══════════ LIGHTBOX ══════════ -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Visionneuse" style="display:none;">
+  <button class="lightbox-close" id="lightbox-close" aria-label="Fermer">&times;</button>
+  <button class="lightbox-prev"  id="lightbox-prev"  aria-label="Précédent">&#8249;</button>
+  <button class="lightbox-next"  id="lightbox-next"  aria-label="Suivant">&#8250;</button>
+
+  <!-- Conteneur du média actif -->
+  <div class="lightbox-media-wrap" id="lightbox-media-wrap">
+    <!-- rempli dynamiquement par JS selon le type : img / video / audio -->
+  </div>
+
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  window.GALLERY_DATA_URL = "{% url 'gallery_data' %}";
+</script>
+{% endblock %}

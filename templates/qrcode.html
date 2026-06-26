@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}QR Code — BibiUnion{% endblock %}
+
+{% block content %}
+<div class="page-card qrcode-container">
+
+  <div class="page-header">
+    <p class="page-eyebrow">Accès rapide</p>
+    <h2 class="page-title">QR Code du mariage</h2>
+    <div class="title-ribbon" aria-hidden="true"></div>
+    <p class="page-subtitle">
+      Partagez ce code avec vos invités pour qu'ils accèdent directement à la galerie.
+    </p>
+  </div>
+
+  {% if qr_url %}
+    <div class="qr-frame">
+      <!-- Coins ornementaux -->
+      <span class="qr-corner qr-corner--tl" aria-hidden="true"></span>
+      <span class="qr-corner qr-corner--tr" aria-hidden="true"></span>
+      <span class="qr-corner qr-corner--bl" aria-hidden="true"></span>
+      <span class="qr-corner qr-corner--br" aria-hidden="true"></span>
+
+      <img src="{{ qr_url }}" alt="QR Code du mariage BibiUnion" class="qr-image">
+    </div>
+
+    <p class="qr-url">{{ site_public_url }}</p>
+
+    <div class="qr-actions">
+      <a href="{{ qr_url }}" download="qrcode-bibiunion.png" class="btn btn-primary">
+        ⬇ Télécharger le QR Code
+      </a>
+      <button type="button" class="btn btn-outline" id="btn-copy-url" data-url="{{ site_public_url }}">
+        📋 Copier le lien
+      </button>
+    </div>
+
+    <p class="qr-hint">
+      Imprimez ce QR Code et placez-le sur chaque table — vos invités peuvent scanner directement
+      pour partager leurs photos et vidéos.
+    </p>
+
+  {% else %}
+    <div class="qr-missing">
+      <p class="empty-ornament" aria-hidden="true">❧</p>
+      <p>Le QR Code n'a pas encore été généré.</p>
+      <p class="qr-hint">
+        Lancez la commande suivante depuis le Raspberry Pi :
+      </p>
+      <pre class="code-block">python manage.py generate_qrcode</pre>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const copyBtn = document.getElementById('btn-copy-url');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(copyBtn.dataset.url).then(() => {
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = '✅ Lien copié !';
+        setTimeout(() => copyBtn.textContent = orig, 2000);
+      });
+    });
+  }
+</script>
+{% endblock %}

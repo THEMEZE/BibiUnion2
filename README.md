@@ -2401,7 +2401,7 @@ class MediaAdmin(admin.ModelAdmin):
      Tu pourras aussi passer une variable Django via une balise
      <style> dans base.html si tu veux la charger dynamiquement.
   ─────────────────────────────────────────────────────────── */
-  --bg-image: url('');   /* ← METS TON IMAGE ICI */
+  --bg-image: url('/static/img/bg-fleurs.jpg');   /* ← METS TON IMAGE ICI */
 }
 
 /* ── 2. RESET & BASE ────────────────────────────────────── */
