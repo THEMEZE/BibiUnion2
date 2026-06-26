@@ -294,7 +294,9 @@ def print_next_steps(project_root, platform_key):
     steps = [
         f"cd {project_root}",
         "python3 -m venv venv && source venv/bin/activate",
+        "pip install --upgrade pip",
         "pip install -r requirements.txt",
+        "pip install gunicorn",
         "pip install libmagic  # si non installé système",
         "python manage.py migrate",
         "python manage.py collectstatic --noinput",

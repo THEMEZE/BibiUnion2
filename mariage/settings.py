@@ -74,12 +74,14 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'photos.bibiunion.fr',
+    'localhost'
     'localhost',
     '127.0.0.1',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://photos.bibiunion.fr',
+    'https://*.trycloudflare.com',
 ]
 
 USE_X_FORWARDED_HOST = True

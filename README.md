@@ -417,7 +417,8 @@ Suppression différenciée : `DELETE_PHOTO_URL` pour les photos, `DELETE_MEDIA_U
 |`gallery/urls.py` | 1 | 
 |`gallery/admin.py` | 1 | 
 |`gallery/migrations/0002_media.py`| 1 |
-|`setup.py1start_tunnel.sh` | 1 | 
+|`setup.py' | 1 |
+|'start_tunnel.sh` | 1 | 
 |`README_GITHUB_PAGES.md`| 1 | 
 |`templates/base.html` | 2 | 
 |`templates/upload.html`| 2 |
@@ -435,6 +436,13 @@ python setup.py          # choisit RPi 2B / RPi 4 / Mac interactivement
 python manage.py migrate # applique la migration 0002_media
 python manage.py collectstatic --noinput
 sudo ./start_tunnel.sh   # lance tout
+```
+
+```bash
+./venv/bin/python setup.py
+./venv/bin/python manage.py migrate
+./venv/bin/python manage.py collectstatic --noinput
+sudo ./start_tunnel.sh
 ```
 
 ---
@@ -654,12 +662,14 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'photos.bibiunion.fr',
+    'localhost'
     'localhost',
     '127.0.0.1',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://photos.bibiunion.fr',
+    'https://*.trycloudflare.com',
 ]
 
 USE_X_FORWARDED_HOST = True
@@ -4600,7 +4610,7 @@ User=pi
 Group=www-data
 WorkingDirectory=/mnt/mariage_data/BibiUnion
 
-ExecStart=/mnt/mariage_data/BibiUnion/venv/bin/gunicorn \
+ExecStart=/mnt/mariage_data/BibiUnion/venv/bin/python -m gunicorn \
           --access-logfile /mnt/mariage_data/BibiUnion/logs/gunicorn-access.log \
           --error-logfile /mnt/mariage_data/BibiUnion/logs/gunicorn-error.log \
           --workers 2 \
@@ -4623,7 +4633,7 @@ User=pi
 Group=www-data
 WorkingDirectory=/mnt/mariage_data/BibiUnion
 
-ExecStart=/mnt/mariage_data/BibiUnion/venv/bin/gunicorn \
+ExecStart=/mnt/mariage_data/BibiUnion/venv/bin/python -m gunicorn \
           --access-logfile /mnt/mariage_data/BibiUnion/logs/gunicorn-access.log \
           --error-logfile /mnt/mariage_data/BibiUnion/logs/gunicorn-error.log \
           --workers 2 \
@@ -5445,7 +5455,9 @@ def print_next_steps(project_root, platform_key):
     steps = [
         f"cd {project_root}",
         "python3 -m venv venv && source venv/bin/activate",
+        "pip install --upgrade pip",
         "pip install -r requirements.txt",
+        "pip install gunicorn",
         "pip install libmagic  # si non installé système",
         "python manage.py migrate",
         "python manage.py collectstatic --noinput",
@@ -5662,7 +5674,7 @@ else
 fi
 
 # 4. Nettoyage du dossier cible
-[ -d BibiUnion ] && rm -rf BibiUnion
+[ -d BibiUnion ] && sudo rm -rf BibiUnion
 
 # 5. Clone toujours dans le même dossier
 git clone "$REPO" BibiUnion

@@ -20,7 +20,7 @@ else
 fi
 
 # 4. Nettoyage du dossier cible
-[ -d BibiUnion ] && rm -rf BibiUnion
+[ -d BibiUnion ] && sudo rm -rf BibiUnion
 
 # 5. Clone toujours dans le même dossier
 git clone "$REPO" BibiUnion
