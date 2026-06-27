@@ -156,12 +156,12 @@ cat > index.html <<EOF
     <title>Bienvenue sur notre site de mariage 💍</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png"
-        href="https://raw.githubusercontent.com/THEMEZE/BibiUnion2/static/img/Bridgerton_logo_square.png">
+        href="https://raw.githubusercontent.com/THEMEZE/BibiUnion2/main/static/img/Bridgerton_logo_square.png">
 
     <!-- Open Graph -->
     <meta property="og:title" content="BibiUnion — Notre Mariage">
     <meta property="og:description" content="Bienvenue sur notre site de mariage 💍">
-    <meta property="og:image" content="https://raw.githubusercontent.com/THEMEZE/BibiUnion2/static/img/Bridgerton_logo_square.png">
+    <meta property="og:image" content="https://raw.githubusercontent.com/THEMEZE/BibiUnion2/main/static/img/Bridgerton_logo_square.png">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ton-domaine.fr">
 
