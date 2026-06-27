@@ -146,16 +146,59 @@ else
     echo "   Pour activer la redirection fixe, exportez ces variables avant de lancer ce script."
 fi
 
-# ── Résumé ────────────────────────────────────────────────────────────────────
+# ── Génération d'une page de redirection GitHub Pages ─────────────────────────
+
+cat > index.html <<EOF
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Redirection...</title>
+
+    <meta http-equiv="refresh" content="0;url=${URL}/upload/">
+
+    <script>
+        window.location.replace("${URL}/upload/");
+    </script>
+</head>
+<body>
+    <p>
+        Redirection...
+        <a href="${URL}/upload/">
+            Cliquez ici si la redirection ne fonctionne pas.
+        </a>
+    </p>
+</body>
+</html>
+EOF
+
+
+# ── Envoi sur GitHub ──────────────────────────────────────────────────────────
+
 echo ""
-echo "╔══════════════════════════════════════════╗"
-echo "║  ✅  Site en ligne !                     ║"
-echo "╠══════════════════════════════════════════╣"
-echo "║  Upload  : $URL/upload/"
-echo "║  Galerie : $URL/gallery/"
-echo "║  QR Code : $URL/qrcode/"
-echo "║  Admin   : $URL/admin-gallery/"
-echo "╚══════════════════════════════════════════╝"
+echo "📤 Publication sur GitHub..."
+
+git add index.html
+
+if ! git diff --cached --quiet; then
+    git commit -m "Mise à jour automatique de la redirection $(date '+%Y-%m-%d %H:%M:%S')"
+    git push origin main
+else
+    echo "✔ Aucun changement à envoyer."
+fi
+
+
+# ── Résumé ────────────────────────────────────────────────────────────────────
+
+echo ""
+echo "╔════════════════════════════════════════════════════════╗"
+echo "║  ✅ Site en ligne !                                    ║"
+echo "╠════════════════════════════════════════════════════════╣"
+echo "║  Upload  : ${URL}/upload/"
+echo "║  Galerie : ${URL}/gallery/"
+echo "║  QR Code : ${URL}/qrcode/"
+echo "║  Admin   : ${URL}/admin-gallery/"
+echo "╚════════════════════════════════════════════════════════╝"
 echo ""
 
 # Garde le tunnel actif

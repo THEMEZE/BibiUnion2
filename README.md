@@ -2,6 +2,141 @@ Ce projet est une évolution du projet BibiUnion de [https://github.com/THEMEZE/
 
 --- 
 
+# Prêt à l’emploi
+
+On a 3 dépôts / acteurs avec des rôles différents :
+- **Mac** : développe tout le projet. Avant chaque `git push` vers **GitHub**, on récupère uniquement `index.html` depuis le dépôt distant pour éviter les conflits.,
+- **Raspberry** : serveur de production. Il déploie le site depuis **GitHub**, génère `index.html` localement, puis pousse uniquement ce fichier vers **GitHub**,
+- **GitHub** : sert de dépôt central de sauvegarde et de point de synchronisation. Il fournit également un lien stable qui redirige via `index.html`. 
+
+Le seul fichier modifié sur le Raspberry est `index.html`. On organise donc le workflow pour que le Mac synchronise uniquement ce fichier avant de pousser.
+
+```
+Mac  ───── push ─────► GitHub
+ ▲                     │
+ │                     ▼
+ └──── pull index.html ◄ Raspberry
+```
+
+## Sur Mac 
+
+### ⚙️ Mise à jour Mac → GitHub
+
+```bash 
+mkdir -p ./tools/Mac
+
+cat > ./tools/Mac/push.sh <<'EOF'
+#!/bin/bash
+set -e
+
+echo "📥 Récupération de index.html..."
+git fetch origin
+git restore --source origin/main index.html 2>/dev/null || true
+
+echo "📤 Envoi vers GitHub..."
+git add .
+
+git commit -m "${1:-Mise à jour}" || true
+
+git push origin main
+EOF
+```
+
+Rendre exécutable et Utilisation :
+
+```bash
+chmod +x ./tools/Mac/push.sh
+./tools/Mac/push.sh "Ajout de la galerie"
+```
+
+## Sur Raspberry
+
+### ⚙️ Mise à jour GitHub → Raspberry
+
+Créer le script :
+
+```bash
+mkdir -p ./tools/Raspberry
+
+cat > ./tools/Raspberry/update.sh <<'EOF'
+#!/bin/bash
+set -e
+
+cd /mnt/mariage_data/
+
+echo "Quel dépôt veux-tu utiliser ?"
+echo "  1) BibiUnion"
+echo "  2) BibiUnion2"
+read -p "Choix (1 ou 2) : " choice
+
+if [ "$choice" = "1" ]; then
+    REPO="https://github.com/THEMEZE/BibiUnion.git"
+elif [ "$choice" = "2" ]; then
+    REPO="https://github.com/THEMEZE/BibiUnion2.git"
+else
+    echo "❌ Choix invalide"
+    exit 1
+fi
+
+if [ -d "BibiUnion/.git" ]; then
+    echo "📥 Dépôt existant"
+
+    cd BibiUnion
+
+    git remote set-url origin "$REPO"
+
+    echo "Synchronisation avec GitHub..."
+
+    git fetch origin
+    git reset --hard origin/main
+
+    # on conserve index.html local si nécessaire
+    git checkout --ours index.html 2>/dev/null || true
+
+    echo "✔ Projet mis à jour."
+
+else
+    echo "📥 Premier téléchargement..."
+
+    git clone "$REPO" BibiUnion
+    cd BibiUnion
+
+    echo "✔ Clone terminé."
+fi
+EOF
+```
+
+Rendre exécutable et Exécution :
+
+```bash 
+chmod +x ./tools/Raspberry/update.sh
+./tools/Raspberry/update.sh
+```
+
+### ⚙️ Reset Github → Raspberry
+
+Si tu veux repartir proprement :
+
+```bash
+chmod +x ./tools/Raspberry/reset.sh
+./tools/Raspberry/reset.sh
+```
+
+### ⚙️ Run (Raspberry)
+
+Pour lancer le serveur :
+
+```bash
+chmod +x ./tools/Raspberry/run.sh
+./tools/Raspberry/run.sh
+```
+
+
+
+---
+
+# Les Modifications 
+
 ### Cloudflare Tunnel — limite de requêtes ?
 
 Cloudflare Tunnel (trycloudflare.com) en version gratuite n'a pas de limite stricte en nombre de requêtes, mais il y a des contraintes importantes pour ton usage :
@@ -5129,21 +5264,64 @@ else
     echo "   Pour activer la redirection fixe, exportez ces variables avant de lancer ce script."
 fi
 
-# ── Résumé ────────────────────────────────────────────────────────────────────
+# ── Génération d'une page de redirection GitHub Pages ─────────────────────────
+
+cat > index.html <<EOF
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Redirection...</title>
+
+    <meta http-equiv="refresh" content="0;url=${URL}/upload/">
+
+    <script>
+        window.location.replace("${URL}/upload/");
+    </script>
+</head>
+<body>
+    <p>
+        Redirection...
+        <a href="${URL}/upload/">
+            Cliquez ici si la redirection ne fonctionne pas.
+        </a>
+    </p>
+</body>
+</html>
+EOF
+
+
+# ── Envoi sur GitHub ──────────────────────────────────────────────────────────
+
 echo ""
-echo "╔══════════════════════════════════════════╗"
-echo "║  ✅  Site en ligne !                     ║"
-echo "╠══════════════════════════════════════════╣"
-echo "║  Upload  : $URL/upload/"
-echo "║  Galerie : $URL/gallery/"
-echo "║  QR Code : $URL/qrcode/"
-echo "║  Admin   : $URL/admin-gallery/"
-echo "╚══════════════════════════════════════════╝"
+echo "📤 Publication sur GitHub..."
+
+git add index.html
+
+if ! git diff --cached --quiet; then
+    git commit -m "Mise à jour automatique de la redirection $(date '+%Y-%m-%d %H:%M:%S')"
+    git push origin main
+else
+    echo "✔ Aucun changement à envoyer."
+fi
+
+
+# ── Résumé ────────────────────────────────────────────────────────────────────
+
+echo ""
+echo "╔════════════════════════════════════════════════════════╗"
+echo "║  ✅ Site en ligne !                                    ║"
+echo "╠════════════════════════════════════════════════════════╣"
+echo "║  Upload  : ${URL}/upload/"
+echo "║  Galerie : ${URL}/gallery/"
+echo "║  QR Code : ${URL}/qrcode/"
+echo "║  Admin   : ${URL}/admin-gallery/"
+echo "╚════════════════════════════════════════════════════════╝"
 echo ""
 
 # Garde le tunnel actif
 wait $TUNNEL_PID
-
+EOF
 ```
 
 
