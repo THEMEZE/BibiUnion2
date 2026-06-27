@@ -38,9 +38,11 @@ git add .
 
 git commit -m "${1:-Mise à jour}" || true
 
+git pull --rebase origin main
 git push origin main
 EOF
 ```
+
 
 Rendre exécutable et Utilisation :
 
