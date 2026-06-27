@@ -153,7 +153,17 @@ cat > index.html <<EOF
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Redirection...</title>
+    <title>Bienvenue sur notre site de mariage 💍</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/THEMEZE/BibiUnion2/img/Bridgerton_logo_square.png">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="BibiUnion — Notre Mariage">
+    <meta property="og:description" content="Bienvenue sur notre site de mariage 💍">
+    <meta property="og:image" content="https://raw.githubusercontent.com/THEMEZE/BibiUnion2/img/Bridgerton_logo_square.png">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ton-domaine.fr">
 
     <meta http-equiv="refresh" content="0;url=${URL}/upload/">
 
