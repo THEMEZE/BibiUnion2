@@ -5420,10 +5420,28 @@ EOF
 
 fi
 
-# ── Envoi sur GitHub ──────────────────────────────────────────────────────────
+# ── Envoi sur GitHub # ── Envoi sur GitHub ──────────────────────────────────────────────────────────
 
 echo ""
 echo "📤 Publication sur GitHub..."
+
+echo "1. config Git" 
+
+if ! git config --global user.name >/dev/null; then
+    git config --global user.name "THEMEZE_RP"
+fi
+
+if ! git config --global user.email >/dev/null; then
+    git config --global user.email "guillaume.themeze@gmail.com"
+fi
+
+echo "2. passer en SSH"
+
+git remote set-url origin git@github.com:THEMEZE/BibiUnion2.git
+
+echo "3. test"
+
+ssh -T git@github.com
 
 git add index.html
 
