@@ -37,6 +37,13 @@ git clone "$REPO" BibiUnion
 cd BibiUnion
 ok "Clone terminé : $REPO"
 
+
+# ════════════════════════════════════════════
+# 3. Donfig Git
+# ════════════════════════════════════════════
+chmod +x ./tools/Raspberry/config_git.sh
+./tools/Raspberry/config_git.sh
+
 #chmod +x ./run.sh
 #./run.sh
 

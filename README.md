@@ -113,6 +113,8 @@ chmod +x ./tools/Raspberry/update.sh
 ./tools/Raspberry/update.sh
 ```
 
+
+
 ### ⚙️ Reset Github → Raspberry
 
 Si tu veux repartir proprement :
@@ -122,13 +124,124 @@ chmod +x ./tools/Raspberry/reset.sh
 ./tools/Raspberry/reset.sh
 ```
 
+```bash 
+mkdir -p ./tools/Mac
+
+cat > ./tools/Mac/push.sh <<'EOF'
+#!/bin/bash
+set -e
+
+echo "📥 Récupération de index.html..."
+git fetch origin
+git restore --source origin/main index.html 2>/dev/null || true
+
+echo "📤 Envoi vers GitHub..."
+git add .
+
+git commit -m "${1:-Mise à jour}" || true
+
+git push origin main
+EOF
+```
+
+Rendre exécutable et Utilisation :
+
+```bash
+chmod +x ./tools/Mac/push.sh
+./tools/Mac/push.sh "Ajout de la galerie"
+```
+
+
+### ⚙️ config Git 
+
+
+```bash
+#mkdir -p ./tools/Raspberry
+
+cat > ./tools/Raspberry/config_git.sh <<'EOF'
+#!/bin/bash
+set -e
+
+echo "==== 1. Installation Git (si besoin) ===="
+sudo apt update
+sudo apt install git -y
+
+echo "==== 2. Configuration identité Git ===="
+
+CURRENT_NAME=$(git config --global user.name || true)
+CURRENT_EMAIL=$(git config --global user.email || true)
+
+if [ -n "$CURRENT_NAME" ] || [ -n "$CURRENT_EMAIL" ]; then
+    echo "⚠️ Configuration Git existante détectée :"
+    echo "   name : $CURRENT_NAME"
+    echo "   email: $CURRENT_EMAIL"
+
+    read -p "❓ Voulez-vous l'écraser ? (y/N) : " confirm
+
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+        echo "✔ Conservation de la configuration existante"
+    else
+        git config --global user.name "THEMEZE_RP"
+        git config --global user.email "guillaume.themeze@gmail.com"
+        echo "✔ Configuration Git mise à jour"
+    fi
+else
+    git config --global user.name "THEMEZE_RP"
+    git config --global user.email "guillaume.themeze@gmail.com"
+    echo "✔ Configuration Git initialisée"
+fi
+
+echo "==== 3. SSH Setup ===="
+
+SSH_KEY="$HOME/.ssh/id_ed25519"
+
+if [ -f "$SSH_KEY" ]; then
+    echo "⚠️ Clé SSH déjà existante : $SSH_KEY"
+
+    read -p "❓ Voulez-vous la remplacer ? (y/N) : " confirm
+
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+        echo "✔ Conservation de la clé SSH existante"
+    else
+        echo "🗑 Suppression ancienne clé..."
+        rm -f "$SSH_KEY" "$SSH_KEY.pub"
+
+        ssh-keygen -t ed25519 -C "raspberry" -f "$SSH_KEY" -N ""
+        echo "✔ Nouvelle clé SSH générée"
+    fi
+else
+    echo "🔐 Génération clé SSH..."
+    ssh-keygen -t ed25519 -C "raspberry" -f "$SSH_KEY" -N ""
+    echo "✔ Clé SSH créée"
+fi
+
+echo "==== 4. Activation agent SSH ===="
+eval "$(ssh-agent -s)"
+ssh-add "$SSH_KEY"
+
+echo "==== 5. Clé publique (à copier sur GitHub) ===="
+echo ""
+cat "$SSH_KEY.pub"
+echo ""
+
+echo "==== 6. Instructions GitHub ===="
+echo "👉 GitHub → Settings → SSH and GPG keys"
+echo "👉 New SSH Key"
+echo ""
+
+echo "==== 7. Test (manuel après ajout GitHub) ===="
+echo "ssh -T git@github.com"
+
+EOF
+```
+
 ### ⚙️ Run (Raspberry)
 
 Pour lancer le serveur :
 
 ```bash
-chmod +x ./tools/Raspberry/run.sh
-./tools/Raspberry/run.sh
+chmod +x ./run.sh
+./run.sh
 ```
 
 
@@ -248,7 +361,7 @@ Voilà une belle liste d'évolutions ! Laisse-moi d'abord tout analyser et te pr
 #### 🔗 Lien fixe via redirection GitHub Pages
 
 - Un repo GitHub `mariage-redirect` avec une page `index.html` qui fait `window.location.href` vers l'URL Cloudflare du moment.
-- `start_tunnel.sh` met à jour ce fichier via l'API GitHub (token en variable d'environnement), push automatiquement → GitHub Pages redirige toujours vers le bon tunnel.
+- `tools/Raspberry/start_tunnel.sh` met à jour ce fichier via l'API GitHub (token en variable d'environnement), push automatiquement → GitHub Pages redirige toujours vers le bon tunnel.
 - Fonctionne sur RPi 2B car c'est juste un appel `curl` à l'API GitHub.
 
 #### 🌸 Design Bridgerton
@@ -567,10 +680,10 @@ Suppression différenciée : `DELETE_PHOTO_URL` pour les photos, `DELETE_MEDIA_U
 Pour déployer, la séquence reste :
 
 ```bash
-python setup.py          # choisit RPi 2B / RPi 4 / Mac interactivement
-python manage.py migrate # applique la migration 0002_media
-python manage.py collectstatic --noinput
-sudo ./start_tunnel.sh   # lance tout
+python ./setup.py          # choisit RPi 2B / RPi 4 / Mac interactivement
+python ./manage.py migrate # applique la migration 0002_media
+python ./manage.py collectstatic --noinput
+sudo start_tunnel.sh   # lance tout
 ```
 
 ```bash
@@ -591,7 +704,7 @@ via Cloudflare Tunnel.
 
 ## Démarrage rapide
 
-1. `./install.sh` — installe tout et configure les services
+1. `install.sh` — installe tout et configure les services
 2. Configurer Cloudflare Tunnel (voir section dédiée)
 3. Mettre à jour `mariage/settings.py` :
    - `ALLOWED_HOSTS`
@@ -641,6 +754,9 @@ BibiUnion/
 ├── manage.py
 ├── requirements.txt
 ├── install.sh
+├── setup.sh
+├── start_tunnel.sh
+├── run.sh
 ├── README.md
 ├── db.sqlite3 (généré)
 │
@@ -675,9 +791,17 @@ BibiUnion/
 │   └── js/app.js
 │
 └── media/
-    ├── photos/
-    ├── thumbnails/
-    └── qrcodes/
+│   ├── photos/
+│   ├── thumbnails/
+│   └── qrcodes/
+│
+└── tools/
+    ├── Mac/
+    │   └── push.sh
+    ├── Raspberry/
+    │   ├── update.sh
+    │   └── reset.sh
+    └── tree_size.py
 ```
 
 # 2. Backend Django
@@ -5266,6 +5390,10 @@ fi
 
 # ── Génération d'une page de redirection GitHub Pages ─────────────────────────
 
+if [ -z "$URL" ]; then
+    echo "❌ URL vide, skip index.html"
+else
+
 cat > index.html <<EOF
 <!doctype html>
 <html lang="fr">
@@ -5290,6 +5418,7 @@ cat > index.html <<EOF
 </html>
 EOF
 
+fi
 
 # ── Envoi sur GitHub ──────────────────────────────────────────────────────────
 
@@ -5830,7 +5959,7 @@ sudo ./start_tunnel.sh
 ```
 
 ```bash
-cat > run_reset.sh << 'EOF'
+cat > ./tools/Raspberry/reset.sh << 'EOF'
 #!/bin/bash
 set -e
 
@@ -5870,12 +5999,18 @@ git clone "$REPO" BibiUnion
 cd BibiUnion
 ok "Clone terminé : $REPO"
 
+# ════════════════════════════════════════════
+# 3. Donfig Git
+# ════════════════════════════════════════════
+chmod +x ./tools/Raspberry/config_git.sh
+./tools/Raspberry/config_git.sh
+
 #chmod +x ./run.sh
 #./run.sh
 
 EOF
 
-chmod +x ./run_reset.sh
+chmod +x ./tools/Raspberry/reset.sh
 ```
 
 ```bash
