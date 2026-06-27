@@ -85,5 +85,6 @@ echo    "║  🚀  Lancement du tunnel Cloudflare...   ║"
 echo -e "╚══════════════════════════════════════════╝${RESET}\n"
 
 chmod +x start_tunnel.sh
-sudo ./start_tunnel.sh
+#sudo -E ./start_tunnel.sh
+./start_tunnel.sh
 
