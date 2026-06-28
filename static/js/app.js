@@ -315,20 +315,23 @@ function initCameraCapture() {
    5. ENREGISTREMENT VIDÉO + REVIEW
    ══════════════════════════════════════════════════════════ */
 function initVideoCapture() {
-  const preview      = document.getElementById('video-rec-preview');
-  const timerEl      = document.getElementById('video-rec-timer');
-  const btnStart     = document.getElementById('btn-start-video');
-  const btnRecord    = document.getElementById('btn-record-video');
-  const btnStop      = document.getElementById('btn-stop-video');
-  const controls     = document.getElementById('video-controls');
-  const review       = document.getElementById('video-review');
-  const reviewPlayer = document.getElementById('video-review-player');
-  const btnRetry     = document.getElementById('btn-video-retry');
-  const btnAccept    = document.getElementById('btn-video-accept');
+  const preview        = document.getElementById('video-rec-preview');
+  const timerEl        = document.getElementById('video-rec-timer');
+  const btnStart       = document.getElementById('btn-start-video');
+  const btnRecord      = document.getElementById('btn-record-video');
+  const btnStop        = document.getElementById('btn-stop-video');
+  const btnRecadrer    = document.getElementById('btn-recadrer-video');
+  const btnFlip        = document.getElementById('btn-flip-video');
+  const controls       = document.getElementById('video-controls');
+  const review         = document.getElementById('video-review');
+  const reviewPlayer   = document.getElementById('video-review-player');
+  const btnRetry       = document.getElementById('btn-video-retry');
+  const btnAccept      = document.getElementById('btn-video-accept');
   if (!preview) return;
 
   let stream=null, recorder=null, chunks=[], elapsed=0, timerInt=null;
   let capturedFile=null, capturedThumb=null;
+  let facing='user';   // selfie par défaut
 
   function showCapture() {
     preview.style.display='block'; controls.style.display='flex';
@@ -336,18 +339,42 @@ function initVideoCapture() {
   }
 
   function showReview(file, thumb) {
-    capturedFile = file; capturedThumb = thumb;
-    reviewPlayer.src = URL.createObjectURL(file);
+    capturedFile=file; capturedThumb=thumb;
+    reviewPlayer.src=URL.createObjectURL(file);
     review.style.display='flex';
     preview.style.display='none'; controls.style.display='none';
   }
 
-  btnStart.addEventListener('click', async () => {
+  async function startCam() {
     try {
-      stream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
-      preview.srcObject=stream; btnRecord.disabled=false;
+      stream?.getTracks().forEach(t=>t.stop());
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facing, width:{ideal:1280}, height:{ideal:720} },
+        audio: true,
+      });
+      preview.srcObject=stream;
+      btnRecord.disabled=false; btnRecadrer.disabled=false; btnFlip.disabled=false;
       btnStart.textContent='Caméra active';
     } catch(err) { alert(`Caméra inaccessible : ${err.message}`); }
+  }
+
+  btnStart.addEventListener('click', startCam);
+
+  /* Recadrer = relance la caméra (stoppe l'enregistrement en cours si besoin) */
+  btnRecadrer.addEventListener('click', ()=>{
+    if (recorder && recorder.state==='recording') {
+      recorder.stop();
+      clearInterval(timerInt);
+      if(timerEl) timerEl.textContent='00:00';
+      btnRecord.disabled=false; btnStop.disabled=true;
+    }
+    startCam();
+  });
+
+  /* Flip = bascule selfie ↔ caméra arrière */
+  btnFlip.addEventListener('click', ()=>{
+    facing = facing==='user'?'environment':'user';
+    startCam();
   });
 
   btnRecord.addEventListener('click', () => {
