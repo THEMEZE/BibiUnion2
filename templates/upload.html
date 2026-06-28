@@ -6,7 +6,6 @@
 {% block content %}
 <div class="page-card upload-container">
 
-  <!-- En-tête de page avec ruban doré -->
   <div class="page-header">
     <p class="page-eyebrow">Vos souvenirs</p>
     <h2 class="page-title">Partagez vos photos & vidéos</h2>
@@ -17,11 +16,9 @@
     </p>
   </div>
 
-  <!-- Formulaire principal -->
   <form id="upload-form" class="upload-form" novalidate>
     {% csrf_token %}
 
-    <!-- Nom + Table -->
     <div class="form-row">
       <div class="form-group">
         <label for="auteur" class="form-label">Votre prénom</label>
@@ -38,23 +35,15 @@
       </div>
     </div>
 
-    <!-- ── ONGLETS de type de partage ── -->
+    <!-- Onglets -->
     <div class="upload-tabs" role="tablist" aria-label="Type de partage">
-      <button type="button" class="upload-tab active" role="tab" data-tab="files"    aria-selected="true">
-        📁 Fichiers
-      </button>
-      <button type="button" class="upload-tab"        role="tab" data-tab="camera"   aria-selected="false">
-        📸 Photo
-      </button>
-      <button type="button" class="upload-tab"        role="tab" data-tab="video-rec" aria-selected="false">
-        🎬 Vidéo
-      </button>
-      <button type="button" class="upload-tab"        role="tab" data-tab="audio-rec" aria-selected="false">
-        🎙️ Vocal
-      </button>
+      <button type="button" class="upload-tab active" role="tab" data-tab="files"     aria-selected="true">📁 Fichiers</button>
+      <button type="button" class="upload-tab"        role="tab" data-tab="camera"    aria-selected="false">📸 Photo</button>
+      <button type="button" class="upload-tab"        role="tab" data-tab="video-rec" aria-selected="false">🎬 Vidéo</button>
+      <button type="button" class="upload-tab"        role="tab" data-tab="audio-rec" aria-selected="false">🎙️ Vocal</button>
     </div>
 
-    <!-- ── TAB : Fichiers ── -->
+    <!-- TAB : Fichiers -->
     <div class="tab-panel active" id="tab-files" role="tabpanel">
       <label class="dropzone" id="dropzone">
         <input type="file" id="file-input" name="images"
@@ -63,77 +52,89 @@
           <span class="dropzone-icon" aria-hidden="true">💍</span>
           <span class="dropzone-text">Touchez pour choisir vos fichiers</span>
           <span class="dropzone-subtext">
-            Photos jusqu'à {{ max_photo_mo }} Mo · Vidéos jusqu'à {{ max_video_mo }} Mo · Audios jusqu'à {{ max_audio_mo }} Mo
+            Photos {{ max_photo_mo }} Mo · Vidéos {{ max_video_mo }} Mo · Audios {{ max_audio_mo }} Mo
           </span>
         </div>
       </label>
     </div>
 
-    <!-- ── TAB : Capture photo ── -->
+    <!-- TAB : Capture photo -->
     <div class="tab-panel" id="tab-camera" role="tabpanel">
       <div class="capture-panel">
         <video id="camera-preview" class="capture-video" autoplay playsinline muted></video>
         <canvas id="camera-canvas" hidden></canvas>
-        <div class="capture-controls">
-          <button type="button" id="btn-start-camera" class="btn btn-outline">
-            Activer la caméra
-          </button>
-          <button type="button" id="btn-snap" class="btn btn-primary" disabled>
-            📸 Prendre la photo
-          </button>
-          <button type="button" id="btn-flip-camera" class="btn btn-ghost" disabled title="Retourner caméra">
-            🔄
-          </button>
+
+        <!-- Zone de prévisualisation photo capturée -->
+        <div class="capture-review" id="camera-review" style="display:none;">
+          <p class="capture-review-label">✨ Votre photo</p>
+          <img id="camera-review-img" class="capture-review-media" alt="Photo capturée">
+          <div class="capture-review-actions">
+            <button type="button" id="btn-camera-retry"  class="btn btn-ghost btn-sm">🔄 Recommencer</button>
+            <button type="button" id="btn-camera-accept" class="btn btn-primary btn-sm">✓ Ajouter à l'envoi</button>
+          </div>
+        </div>
+
+        <div class="capture-controls" id="camera-controls">
+          <button type="button" id="btn-start-camera" class="btn btn-outline">Activer la caméra</button>
+          <button type="button" id="btn-snap"         class="btn btn-primary" disabled>📸 Prendre la photo</button>
+          <button type="button" id="btn-flip-camera"  class="btn btn-ghost"   disabled title="Retourner caméra">🔄</button>
         </div>
       </div>
     </div>
 
-    <!-- ── TAB : Enregistrement vidéo ── -->
+    <!-- TAB : Enregistrement vidéo -->
     <div class="tab-panel" id="tab-video-rec" role="tabpanel">
       <div class="capture-panel">
         <video id="video-rec-preview" class="capture-video" autoplay playsinline muted></video>
         <div class="rec-timer" id="video-rec-timer" aria-live="polite">00:00</div>
-        <div class="capture-controls">
-          <button type="button" id="btn-start-video" class="btn btn-outline">
-            Activer la caméra
-          </button>
-          <button type="button" id="btn-record-video" class="btn btn-primary" disabled>
-            ⏺ Démarrer
-          </button>
-          <button type="button" id="btn-stop-video" class="btn btn-danger" disabled>
-            ⏹ Arrêter
-          </button>
+
+        <!-- Zone de prévisualisation vidéo enregistrée -->
+        <div class="capture-review" id="video-review" style="display:none;">
+          <p class="capture-review-label">✨ Votre vidéo</p>
+          <video id="video-review-player" class="capture-review-media" controls></video>
+          <div class="capture-review-actions">
+            <button type="button" id="btn-video-retry"  class="btn btn-ghost btn-sm">🔄 Recommencer</button>
+            <button type="button" id="btn-video-accept" class="btn btn-primary btn-sm">✓ Ajouter à l'envoi</button>
+          </div>
+        </div>
+
+        <div class="capture-controls" id="video-controls">
+          <button type="button" id="btn-start-video"  class="btn btn-outline">Activer la caméra</button>
+          <button type="button" id="btn-record-video" class="btn btn-primary" disabled>⏺ Démarrer</button>
+          <button type="button" id="btn-stop-video"   class="btn btn-danger"  disabled>⏹ Arrêter</button>
         </div>
       </div>
     </div>
 
-    <!-- ── TAB : Enregistrement audio ── -->
+    <!-- TAB : Enregistrement audio -->
     <div class="tab-panel" id="tab-audio-rec" role="tabpanel">
       <div class="capture-panel audio-panel">
         <div class="audio-waveform" id="audio-waveform" aria-hidden="true">
-          {% for i in "123456789012345678901234" %}
-            <span class="waveform-bar"></span>
-          {% endfor %}
+          {% for i in "123456789012345678901234" %}<span class="waveform-bar"></span>{% endfor %}
         </div>
         <div class="rec-timer" id="audio-rec-timer" aria-live="polite">00:00</div>
-        <div class="capture-controls">
-          <button type="button" id="btn-record-audio" class="btn btn-primary">
-            🎙️ Enregistrer
-          </button>
-          <button type="button" id="btn-stop-audio" class="btn btn-danger" disabled>
-            ⏹ Arrêter
-          </button>
+
+        <!-- Zone de prévisualisation audio enregistré -->
+        <div class="capture-review" id="audio-review" style="display:none;">
+          <p class="capture-review-label">✨ Votre message vocal</p>
+          <audio id="audio-review-player" class="capture-review-audio" controls></audio>
+          <div class="capture-review-actions">
+            <button type="button" id="btn-audio-retry"  class="btn btn-ghost btn-sm">🔄 Recommencer</button>
+            <button type="button" id="btn-audio-accept" class="btn btn-primary btn-sm">✓ Ajouter à l'envoi</button>
+          </div>
+        </div>
+
+        <div class="capture-controls" id="audio-controls">
+          <button type="button" id="btn-record-audio" class="btn btn-primary">🎙️ Enregistrer</button>
+          <button type="button" id="btn-stop-audio"   class="btn btn-danger"  disabled>⏹ Arrêter</button>
         </div>
       </div>
     </div>
 
-    <!-- ── Prévisualisation des fichiers en attente ── -->
+    <!-- Prévisualisation fichiers en attente -->
     <div id="preview-container" class="preview-container" aria-label="Aperçu des fichiers sélectionnés"></div>
 
-    <!-- ── Bouton d'envoi ── -->
-    <button type="submit" id="submit-btn" class="btn btn-primary btn-full" disabled>
-      Envoyer
-    </button>
+    <button type="submit" id="submit-btn" class="btn btn-primary btn-full" disabled>Envoyer</button>
   </form>
 
   <!-- Résumé post-envoi -->
