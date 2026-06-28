@@ -305,7 +305,7 @@ function initCameraCapture() {
 
   btnAccept.addEventListener('click', () => {
     if (!capturedBlob) return;
-    const file = new File([capturedBlob], `photo_${Date.now()}.jpg`, { type:'image/jpeg' });
+    const file = new File([capturedBlob], `${mediaFilename('jpg')}`, { type:'image/jpeg' });
     window._addCapturedFile(file, 'photo');
     capturedBlob = null; showCapture();
   });
@@ -389,7 +389,7 @@ function initVideoCapture() {
       const bMime = recorder.mimeType;
       const ext   = bMime.includes('webm')?'webm':'mp4';
       const blob  = new Blob(chunks,{type:bMime});
-      const file  = Object.assign(new File([blob],`video_${Date.now()}.${ext}`,{type:bMime}),{_duration:elapsed});
+      const file  = Object.assign(new File([blob],`${mediaFilename(ext)}`,{type:bMime}),{_duration:elapsed});
 
       /* Snapshot miniature depuis la préview */
       const c=document.createElement('canvas'); c.width=320; c.height=180;
@@ -470,7 +470,7 @@ function initAudioCapture() {
         const bMime = recorder.mimeType;
         const ext   = bMime.includes('webm')?'webm':bMime.includes('mp4')?'m4a':'ogg';
         const file  = Object.assign(
-          new File([new Blob(chunks,{type:bMime})],`vocal_${Date.now()}.${ext}`,{type:bMime}),
+          new File([new Blob(chunks,{type:bMime})],`${mediaFilename(ext)}`,{type:bMime}),
           {_duration:elapsed}
         );
         showReview(file);
@@ -508,6 +508,31 @@ function initAudioCapture() {
 
 function bestMime(types) { return types.find(t=>MediaRecorder.isTypeSupported(t))||''; }
 function formatTime(s)   { return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+
+/**
+ * Construit un nom de fichier unique :
+ *   {prenom}_{table}_{YYYYMMDD-HHmmss-mmm}.{ext}
+ * Ex : Marie_Table3_20240615-143207-482.jpg
+ */
+function mediaFilename(ext) {
+  const auteur = (document.getElementById('auteur')?.value.trim() || 'Invite')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9]/g,'-')
+    .slice(0, 30);
+
+  const table = (document.getElementById('table')?.value.trim() || '')
+    .replace(/[^a-zA-Z0-9]/g,'-')
+    .slice(0, 20);
+
+  const now = new Date();
+  const pad = (n,l=2) => String(n).padStart(l,'0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`
+              + `-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+              + `-${pad(now.getMilliseconds(),3)}`;
+
+  const parts = [auteur, table, stamp].filter(Boolean);
+  return `${parts.join('_')}.${ext}`;
+}
 
 /* ══════════════════════════════════════════════════════════
    7. PAGE GALERIE
